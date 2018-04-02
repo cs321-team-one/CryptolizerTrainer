@@ -4,7 +4,7 @@ import requests
 import json
 import datetime
 
-REQUEST_TIMEOUT = 5
+REQUEST_TIMEOUT = 8
 DATA_DIRECTORY = './cached_data'
 NEWS_DATA_PATH = f'{DATA_DIRECTORY}/news.json'
 PRICE_DATA_PATH = f'{DATA_DIRECTORY}/price.json'
