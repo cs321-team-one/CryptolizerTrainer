@@ -218,6 +218,7 @@ def get_training_data():
     news_data = process_news_data(news_data)
 
     print(news_data)
+    print(price_data)
 
 def main():
     get_training_data()
