@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import requests
 import json
-from datetime import datetime
+import datetime
 
 REQUEST_TIMEOUT = 8
 DATA_DIRECTORY = './cached_data'
@@ -61,7 +61,7 @@ class PriceAPI:
 
 
 def process_price_api_time(x):
-    now = datetime.fromtimestamp(x)
+    now = datetime.datetime.fromtimestamp(x)
     return datetime_keep_only_date(now)
 
 
@@ -91,7 +91,7 @@ def read_price_data_from_path(price_data_path):
 
 
 def process_news_api_time(x):
-    now = datetime.strptime(x.split('T')[0], '%Y-%m-%d')
+    now = datetime.datetime.strptime(x.split('T')[0], '%Y-%m-%d')
     return now
 
 
@@ -129,11 +129,25 @@ def read_news_data_from_path(news_data_path):
 
 
 def datetime_keep_only_date(datetime_with_time):
-    return datetime(datetime_with_time.year, datetime_with_time.month, datetime_with_time.day)
+    return datetime.datetime(datetime_with_time.year, datetime_with_time.month, datetime_with_time.day)
 
 
 def combine_price_and_news_data(price_data, news_data):
+
+    # Loop through the news articles and append the corresponding change in the day's price
+    found_prices = 0
+
     price_change_array = []
+    for current_day, text, title in zip(news_data['time'], news_data['text'], news_data['title']):
+        for price_time, price_open, price_close in zip(price_data['time'], price_data['open'], price_data['close']):
+            if price_time == current_day:
+                price_change = (price_close - price_open) / price_open
+                price_change_array.append(price_change)
+                found_prices += 1
+
+    news_data['price_change'] = pd.Series(price_change_array)
+
+    return news_data
 
 
 def process_price_data(price_data):
@@ -217,11 +231,14 @@ def get_training_data():
     price_data = process_price_data(price_data)
     news_data = process_news_data(news_data)
 
-    print(news_data)
-    print(price_data)
+    price_news_data = combine_price_and_news_data(price_data, news_data)
+
+    return price_news_data
+
 
 def main():
-    get_training_data()
+    training_data = get_training_data()
+    print(training_data)
 
 
 if __name__ == "__main__":
