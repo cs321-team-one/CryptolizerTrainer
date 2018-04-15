@@ -7,8 +7,10 @@ from keras.layers import Dense, Input, Embedding, Dropout, Conv1D, MaxPooling1D
 from keras.layers.core import Flatten
 from keras.models import Model
 from keras.optimizers import RMSprop
+from pathlib import Path
+import os
 
-import functions
+from lib import functions
 from lib.get_training_data import get_training_data
 
 FILTERS = 500
@@ -19,9 +21,12 @@ EARLY_STOPPING, PATIENCE = True, 20
 KEEP_OLD_MODEL = False
 REGULARIZATION = 0.20
 
-CACHE_PATH = './cached_data'
-MODEL_PATH = f'{CACHE_PATH}/news_model.h5'
-BEST_WEIGHTS_PATH = f'{CACHE_PATH}/trained_weights.hdf5'
+ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
+CACHE_PATH = ROOT / 'cached_data'
+
+MODEL_PATH = str(CACHE_PATH / 'news_model.h5')
+BEST_WEIGHTS_PATH = str(CACHE_PATH / 'trained_weights.hdf5')
+CACHE_PATH = str(CACHE_PATH)
 
 
 def create_model():
@@ -91,7 +96,7 @@ def train_api(data_input, output, x_column, y_column, keep_old_model):
 
 
 def main():
-    training_data = get_training_data()
+    training_data = get_training_data(cached_data_path=Path(CACHE_PATH), overwrite_data=False)
     train_api(training_data, MODEL_PATH, 'title', 'price_change', False)
 
 

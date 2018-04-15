@@ -3,11 +3,9 @@ import os
 import requests
 import json
 import datetime
+from pathlib import Path
 
 REQUEST_TIMEOUT = 8
-DATA_DIRECTORY = './cached_data'
-NEWS_DATA_PATH = f'{DATA_DIRECTORY}/news.json'
-PRICE_DATA_PATH = f'{DATA_DIRECTORY}/price.json'
 
 class NewsAPI:
     search_query = 'cryptocurrency|bitcoin|ethereum|litecoin|neo|blockchain|monero|ico|zcash|ripple|cardano|iota' \
@@ -186,13 +184,16 @@ def process_news_data(news_data):
     return combined_news_data
 
 
-def get_training_data(overwrite_data=False):
+def get_training_data(overwrite_data=False, cached_data_path=Path('./cached_data')):
     """
     Obtains the training data from the AI
     :return: The training data.
     """
-    if not os.path.exists(DATA_DIRECTORY):
-        os.makedirs(DATA_DIRECTORY)
+    news_data_path = str(cached_data_path / 'news.json')
+    price_data_path = str(cached_data_path / 'price.json')
+
+    if not os.path.exists(cached_data_path):
+        os.makedirs(str(cached_data_path))
 
     price_api = PriceAPI()
     news_api = NewsAPI()
@@ -201,30 +202,30 @@ def get_training_data(overwrite_data=False):
     news_data = None
 
     # Get the price data
-    if not os.path.exists(PRICE_DATA_PATH) or overwrite_data:
+    if not os.path.exists(price_data_path) or overwrite_data:
         try:
             price_data = request_price_data_from_api(price_api)
-            with open(PRICE_DATA_PATH, 'w') as f:
+            with open(price_data_path, 'w') as f:
                 json.dump(price_data, f)
         except requests.RequestException:
             print('Error obtaining data from the API... Attempting to read cached data...')
-            if os.path.exists(PRICE_DATA_PATH):
-                price_data = read_price_data_from_path(PRICE_DATA_PATH)
-    elif os.path.exists(PRICE_DATA_PATH):
-        price_data = read_price_data_from_path(PRICE_DATA_PATH)
+            if os.path.exists(price_data_path):
+                price_data = read_price_data_from_path(price_data_path)
+    elif os.path.exists(price_data_path):
+        price_data = read_price_data_from_path(price_data_path)
 
     # Get the news data
-    if not os.path.exists(NEWS_DATA_PATH) or overwrite_data:
+    if not os.path.exists(news_data_path) or overwrite_data:
         try:
             news_data = request_news_data_from_api(news_api)
-            with open(NEWS_DATA_PATH, 'w') as f:
+            with open(news_data_path, 'w') as f:
                 json.dump(news_data, f)
         except requests.RequestException:
             print('Error obtaining data from the news API... Attempting to read cached data...')
-            if os.path.exists(NEWS_DATA_PATH):
-                news_data = read_news_data_from_path(NEWS_DATA_PATH)
-    elif os.path.exists(NEWS_DATA_PATH):
-        news_data = read_news_data_from_path(NEWS_DATA_PATH)
+            if os.path.exists(news_data_path):
+                news_data = read_news_data_from_path(news_data_path)
+    elif os.path.exists(news_data_path):
+        news_data = read_news_data_from_path(news_data_path)
 
     price_data = process_price_data(price_data)
     news_data = process_news_data(news_data)
