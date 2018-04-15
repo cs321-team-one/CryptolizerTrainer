@@ -3,6 +3,8 @@ import numpy as np
 from pathlib import Path
 import sys
 import os
+import json
+import pandas as pd
 
 ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
 sys.path.append(str(ROOT))
@@ -18,7 +20,7 @@ CACHE_PATH = ROOT / 'cached_data'
 MODEL_PATH = str(CACHE_PATH / 'news_model.h5')
 CACHE_PATH = str(CACHE_PATH)
 
-X_COLUMN = 'title'
+X_COLUMN = 'text'
 Y_COLUMN = 'price_change'
 
 
@@ -30,16 +32,8 @@ def main():
     y = model.predict(x)
     y = [1 if a[0] >= a[1] else 0 for a in y]
     df[Y_COLUMN] = np.array(y)
-    print(df)
 
-    # model = keras.models.load_model(MODEL_PATH)
-    # title = "Tiny US soft drinks firm changes name to cash"
-    # to_predict = [title]
-    # print(title)
-    # x = functions.char_preproc_x(to_predict)
-    # y = model.predict(x)
-    # y = np.array_str(np.argmax(y, axis=1))
-    # print(y)
+    print(df)
 
 
 main()
