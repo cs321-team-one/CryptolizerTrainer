@@ -1,10 +1,14 @@
 import keras
 import numpy as np
+from pathlib import Path
+import sys
+import os
+
+ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
+sys.path.append(ROOT)
 
 from lib import functions
 from lib.get_training_data import get_training_data
-from pathlib import Path
-import os
 
 INFRINGING_THRESHOLD = 0.5
 
