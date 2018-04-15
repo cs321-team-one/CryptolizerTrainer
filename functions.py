@@ -8,13 +8,6 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import LabelBinarizer
 
-URL_CRAWLER_EXEC = './node-url-crawler/bin/crawl_urls-linux'
-extracted_urls_result_key = 'text'
-
-
-def extract_hostnames(json_filename, url_key):
-    os.system("{} -i {} -o {} -u {}".format(URL_CRAWLER_EXEC, json_filename, json_filename, url_key))
-
 
 def cleanup_str(st, numbers=False):
     if type(st) == bytes:

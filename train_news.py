@@ -1,4 +1,3 @@
-import argparse
 import os
 
 import keras
@@ -8,71 +7,36 @@ from keras.layers import Dense, Input, Embedding, Dropout, Conv1D, MaxPooling1D
 from keras.layers.core import Flatten
 from keras.models import Model
 from keras.optimizers import RMSprop
-import numpy as np
-import pandas as pd
-import io_functions
-from lib.get_training_data import get_training_data
 
 import functions
+from lib.get_training_data import get_training_data
 
-# settings ---------------------
-# ------------------------------
-
-EMBEDDING = True
-TYPE = 'embedding' if EMBEDDING else 'standard'
-MODELPATH = 'models/char-conv-' + TYPE + '-{epoch:02d}-{val_acc:.3f}-{val_loss:.3f}.hdf5'
 FILTERS = 500
-LR = 0.0001 if EMBEDDING else 0.00001
-EPOCHS = 75
-BATCH_SIZE = 32
-EARLY_STOPPING, PATIENCE = True, 30
+LR = 0.0001
+EPOCHS = 25
+BATCH_SIZE = 16
+EARLY_STOPPING, PATIENCE = True, 20
 KEEP_OLD_MODEL = False
-REGULARIZATION = 0.05
-BEST_WEIGHTS_PATH = './trained_weights.hdf5'
+REGULARIZATION = 0.20
 
-CONV = [
-    {'filters': 500, 'kernel': 16, 'strides': 1, 'padding': 'same', 'reg': REGULARIZATION, 'pool': 2},
-    {'filters': 500, 'kernel': 8, 'strides': 1, 'padding': 'same', 'reg': REGULARIZATION, 'pool': 2},
-    {'filters': 500, 'kernel': 16, 'strides': 1, 'padding': 'same', 'reg': 0, 'pool': ''}
-]
+CACHE_PATH = './cached_data'
+MODEL_PATH = f'{CACHE_PATH}/news_model.h5'
+BEST_WEIGHTS_PATH = f'{CACHE_PATH}/trained_weights.hdf5'
 
 
 def create_model():
-    if EMBEDDING:
-        inputlayer = Input(shape=(250,))
-        network = Embedding(70, 16, input_length=250)(inputlayer)
-
-    else:
-        inputlayer = Input(shape=(250, 70))
-        network = inputlayer
-
-    # convolutional layers ---------
-    # ------------------------------
-
-    for C in CONV:
-
-        # conv layer
-        network = Conv1D(filters=C['filters'], kernel_size=C['kernel'],
-                         strides=C['strides'], padding=C['padding'], activation='relu',
-                         kernel_regularizer=regularizers.l2(C['reg']))(network)
-
-        if type(C['pool']) != int:
-            continue
-
-        # pooling layer
-        network = MaxPooling1D(C['pool'])(network)
-
-    # fully connected --------------
-    # ------------------------------
+    input_layer = Input(shape=(250,))
+    network = Embedding(70, 16, input_length=250)(input_layer)
+    network = Conv1D(filters=500, kernel_size=16,
+                     strides=1, padding='same', activation='relu',
+                     kernel_regularizer=regularizers.l2(0.20))(network)
+    network = MaxPooling1D(2)(network)
     network = Flatten()(network)
     network = Dense(1024, activation='relu')(network)
     network = Dropout(0.1)(network)
-
-    # output
-    ypred = Dense(2, activation='softmax')(network)
+    y_prediction = Dense(2, activation='softmax')(network)
     optimizer = RMSprop(lr=LR)
-
-    model = Model(inputs=inputlayer, outputs=ypred)
+    model = Model(inputs=input_layer, outputs=y_prediction)
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['acc'])
@@ -80,17 +44,13 @@ def create_model():
 
 
 def train_api(data_input, output, x_column, y_column, keep_old_model):
-    if not isinstance(data_input, pd.DataFrame):
-        infile = data_input[0].name
-        df = io_functions.read_data(infile)
-    else:
-        df = data_input
+    df = data_input
 
     df = df[[x_column, y_column]]
 
     df = df.dropna().drop_duplicates(subset=x_column)
 
-    data = functions.char_preproc(df[x_column], df[y_column], binarize=not EMBEDDING)
+    data = functions.char_preproc(df[x_column], df[y_column], binarize=False)
 
     if os.path.exists(output) and keep_old_model:
         model = keras.models.load_model(output)
@@ -98,12 +58,13 @@ def train_api(data_input, output, x_column, y_column, keep_old_model):
         model = create_model()
     print(model.summary())
 
-    # early stopping
-    estopping = EarlyStopping(monitor='val_acc', patience=PATIENCE)
-    save_best_model = keras.callbacks.ModelCheckpoint(BEST_WEIGHTS_PATH, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
+    early_stopping = EarlyStopping(monitor='val_acc', patience=PATIENCE)
+    save_best_model = keras.callbacks.ModelCheckpoint(BEST_WEIGHTS_PATH,
+                                                      monitor='val_loss',
+                                                      verbose=1,
+                                                      save_best_only=True,
+                                                      mode='auto')
 
-    # fit and run ------------------
-    # ------------------------------
     try:
         model.fit(data.x_train,
                   data.y_train,
@@ -112,7 +73,7 @@ def train_api(data_input, output, x_column, y_column, keep_old_model):
                   batch_size=BATCH_SIZE,
                   shuffle=True,
                   verbose=2,
-                  callbacks=[estopping, save_best_model] if EARLY_STOPPING else [save_best_model])
+                  callbacks=[early_stopping, save_best_model] if EARLY_STOPPING else [save_best_model])
 
     except KeyboardInterrupt:
         print("training stopped")
@@ -130,20 +91,8 @@ def train_api(data_input, output, x_column, y_column, keep_old_model):
 
 
 def main():
-    # parser = argparse.ArgumentParser(description='Train on data from a .csv/.xlsx/.json file.')
-    # parser.add_argument('input', nargs=1, type=argparse.FileType('r'), help='The file that contains a list of data '
-    #                                                                         'with URLs that would be used for '
-    #                                                                         'classification.')
-    # parser.add_argument('-o', '--output', help='The output filepath for the trained model.', required=True)
-    # parser.add_argument('-x', '--x-column', help='The column name that corresponds to the URLs of the websites.',
-    #                     required=True)
-    # parser.add_argument('-y', '--y-column', help='The column name that corresponds to the infringing values.',
-    #                     required=True)
-    #
-    # args = parser.parse_args()
-    # train_api(args.input, args.output, args.x_column, args.y_column, KEEP_OLD_MODEL)
     training_data = get_training_data()
-    train_api(training_data, './cached_data/news_model.h5', 'title', 'price_change', False)
+    train_api(training_data, MODEL_PATH, 'title', 'price_change', False)
 
 
 if __name__ == "__main__":

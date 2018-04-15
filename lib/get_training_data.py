@@ -235,7 +235,7 @@ def get_training_data(overwrite_data=False):
 
 
 def main():
-    training_data = get_training_data()
+    training_data = get_training_data(True)
     print(training_data)
 
 
