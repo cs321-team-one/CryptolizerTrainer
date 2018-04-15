@@ -15,7 +15,7 @@ import numpy as np
 import sys
 
 ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
-sys.path.append(ROOT)
+sys.path.append(str(ROOT))
 
 from lib import functions
 from lib.get_training_data import get_training_data
