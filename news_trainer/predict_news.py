@@ -10,7 +10,8 @@ INFRINGING_THRESHOLD = 0.5
 
 ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
 CACHE_PATH = ROOT / 'cached_data'
-MODEL_PATH = str(ROOT / 'model' / 'news_model.h5')
+# MODEL_PATH = str(ROOT / 'model' / 'news_model.h5')
+MODEL_PATH = str(CACHE_PATH / 'news_model.h5')
 CACHE_PATH = str(CACHE_PATH)
 
 X_COLUMN = 'title'
@@ -35,15 +36,6 @@ def main():
     # y = model.predict(x)
     # y = np.array_str(np.argmax(y, axis=1))
     # print(y)
-
-
-
-
-
-
-
-
-
 
 
 main()

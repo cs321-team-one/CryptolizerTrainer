@@ -9,6 +9,9 @@ from keras.models import Model
 from keras.optimizers import RMSprop
 from pathlib import Path
 import os
+import pandas as pd
+import json
+import numpy as np
 
 from lib import functions
 from lib.get_training_data import get_training_data
@@ -27,6 +30,30 @@ CACHE_PATH = ROOT / 'cached_data'
 MODEL_PATH = str(CACHE_PATH / 'news_model.h5')
 BEST_WEIGHTS_PATH = str(CACHE_PATH / 'trained_weights.hdf5')
 CACHE_PATH = str(CACHE_PATH)
+
+
+def balance_positive_and_negative_set(master_dataframe, y_column):
+    positive_num = len(master_dataframe[master_dataframe[y_column] == True])
+    negative_num = len(master_dataframe[master_dataframe[y_column] == False])
+
+    sort_values = []
+
+    for y in master_dataframe[y_column]:
+        sort_values.append(1 if y == 1 else 0)
+
+    master_dataframe['sort'] = np.array(sort_values)
+
+    if negative_num > positive_num:
+        master_dataframe = master_dataframe.sort_values('sort', ascending=False)
+        master_dataframe.index = range(len(master_dataframe))
+        master_dataframe = master_dataframe.truncate(after=positive_num * 2)
+
+    elif negative_num < positive_num:
+        master_dataframe = master_dataframe.sort_values('sort', ascending=True)
+        master_dataframe.index = range(len(master_dataframe))
+        master_dataframe = master_dataframe.truncate(after=negative_num * 2)
+
+    return master_dataframe.drop('sort', axis=1)
 
 
 def create_model():
@@ -96,7 +123,20 @@ def train_api(data_input, output, x_column, y_column, keep_old_model):
 
 
 def main():
-    training_data = get_training_data(cached_data_path=Path(CACHE_PATH), overwrite_data=False)
+    # training_data = get_training_data(cached_data_path=Path(CACHE_PATH), overwrite_data=False)
+    training_data = json.load(open(f'{CACHE_PATH}/news_training_data.json'))
+    training_data = json.loads(training_data)
+    training_data = pd.DataFrame(training_data)
+    training_data = balance_positive_and_negative_set(training_data, 'price_change')
+
+    positives = [x for x in training_data['price_change'] if x == 1]
+
+    positive_len = len(positives)
+    negative_len = len(training_data['price_change']) - len(positives)
+
+    print(f'Positive samples: {positive_len}')
+    print(f'Negative samples: {negative_len}')
+
     train_api(training_data, MODEL_PATH, 'title', 'price_change', False)
 
 
