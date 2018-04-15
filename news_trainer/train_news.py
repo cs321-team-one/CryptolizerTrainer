@@ -12,9 +12,14 @@ import os
 import pandas as pd
 import json
 import numpy as np
+import sys
+
+ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
+sys.path.append(ROOT)
 
 from lib import functions
 from lib.get_training_data import get_training_data
+
 
 FILTERS = 500
 LR = 0.0001
@@ -24,7 +29,6 @@ EARLY_STOPPING, PATIENCE = True, 20
 KEEP_OLD_MODEL = False
 REGULARIZATION = 0.20
 
-ROOT = Path(os.path.realpath(__file__)).resolve().parents[1]
 CACHE_PATH = ROOT / 'cached_data'
 
 MODEL_PATH = str(CACHE_PATH / 'news_model.h5')
