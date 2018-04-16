@@ -153,7 +153,6 @@ def process_price_data(price_data):
     :return: Processed DataFrame
     """
     price_data = pd.DataFrame(price_data)
-    price_data = pd.DataFrame(price_data)
     price_data = price_data.reindex(
         columns=['time', 'high', 'low', 'open', 'volumefrom', 'volumeto', 'close'])
     price_data['time'] = price_data['time'].apply(lambda x: process_price_api_time(x))
