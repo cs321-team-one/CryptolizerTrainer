@@ -93,7 +93,7 @@ def main():
     if OVERWRITE_MODEL:
         train_ai(H5_FILEPATH)
 
-    model = load_model('data/GRN_model')
+    model = load_model(str(PARENT_DIR / 'data/GRN_model'))
 
     df = load_new_data()
     columns = ['close']
