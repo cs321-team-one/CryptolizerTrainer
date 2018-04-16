@@ -12,14 +12,17 @@ from keras.models import load_model
 from sklearn.externals import joblib
 from sklearn.preprocessing import MinMaxScaler
 
-sys.path.append(str(Path(os.path.realpath(__file__)).resolve().parents[0]))
+
+PARENT_DIR = Path(os.path.realpath(__file__)).resolve().parents[0]
+
+sys.path.append(str(PARENT_DIR))
 sys.path.append(str(Path(os.path.realpath(__file__)).resolve().parents[1]))
 
 from price_trainer import get_data
 
-MODEL_OUTPATH = 'data/bitcoin2015to2017_close_GRU'
-H5_FILEPATH = 'data/bitcoin2015to2017_close.h5'
-SCALER_FILEPATH = 'data/scaler.save'
+MODEL_OUTPATH = str(PARENT_DIR / 'data/bitcoin2015to2017_close_GRU')
+H5_FILEPATH = str(PARENT_DIR / 'data/bitcoin2015to2017_close.h5')
+SCALER_FILEPATH = str(PARENT_DIR / 'data/scaler.save')
 
 OVERWRITE_MODEL = False
 REFRESH_DATA = False
