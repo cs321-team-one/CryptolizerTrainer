@@ -12,8 +12,8 @@ from keras.models import load_model
 from sklearn.externals import joblib
 from sklearn.preprocessing import MinMaxScaler
 
-ROOT = Path(os.path.realpath(__file__)).resolve().parents[0]
-sys.path.append(str(ROOT))
+sys.path.append(str(Path(os.path.realpath(__file__)).resolve().parents[0]))
+sys.path.append(str(Path(os.path.realpath(__file__)).resolve().parents[1]))
 
 from price_trainer import get_data
 
