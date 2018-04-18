@@ -78,6 +78,7 @@ def predict_price():
         past_window = 256
         data = request.get_json()
 
+        print(f'Prediction price data for {data}')
         if 'ticker' not in data:
             ticker = 'BTC'
         else:
