@@ -9,6 +9,7 @@ import requests
 from keras.layers import *
 from keras.models import Sequential
 from keras.models import load_model
+from keras.callbacks import EarlyStopping
 from sklearn.externals import joblib
 from sklearn.preprocessing import MinMaxScaler
 
@@ -20,7 +21,7 @@ sys.path.append(str(Path(os.path.realpath(__file__)).resolve().parents[1]))
 
 from price_trainer import get_data
 
-MODEL_OUTPATH = str(PARENT_DIR / 'data/bitcoin2015to2017_close_GRU')
+MODEL_OUTPATH = str(PARENT_DIR / 'data/price_model.h5')
 H5_FILEPATH = str(PARENT_DIR / 'data/bitcoin2015to2017_close.h5')
 SCALER_FILEPATH = str(PARENT_DIR / 'data/scaler.save')
 
@@ -44,7 +45,7 @@ def train_ai(h5_data_path):
     units = 50
     batch_size = 8
     nb_features = datas.shape[2]
-    epochs = 20
+    epochs = 60
     output_size = 16
     # split training validation
     training_size = int(0.8 * datas.shape[0])
@@ -93,18 +94,19 @@ def main():
     if OVERWRITE_MODEL:
         train_ai(H5_FILEPATH)
 
-    model = load_model(str(PARENT_DIR / 'data/GRN_model'))
+    model = load_model(MODEL_OUTPATH)
 
     df = load_new_data()
     columns = ['close']
     df = df.loc[:, columns]
+
     df = scaler.transform(df)
 
     df_np = np.array(df)[len(df) - PAST_WINDOW:]
     df_np = np.expand_dims(df_np, axis=0)
 
     predicted_b = scaler.inverse_transform(model.predict(df_np))
-    print(predicted_b)
+    print(predicted_b[0])
 
 
 if __name__ == "__main__":

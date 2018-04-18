@@ -1,5 +1,6 @@
 # for you automatically.
 # requests are objects that flask handles (get set post, etc)
+import requests
 from flask import Flask, render_template, request, jsonify
 # scientific computing library for saving, reading, and resizing images
 from scipy.misc import imsave, imread, imresize
@@ -9,17 +10,18 @@ import numpy as np
 import keras.models
 # for regular expressions, saves time dealing with string data
 import re
-
+import pandas as pd
 import sys
 import os
 from lib.functions import char_preproc_x
 from model.load import *
+import json
 
 app = Flask(__name__)
-global model, graph
+global news_model, price_model, price_scaler, graph
 
 # initialize these variables
-model, graph = init()
+news_model, price_model, price_scaler, graph = init()
 
 
 # SINGLE PREDICTION:
@@ -44,7 +46,7 @@ def index():
 
 
 @app.route('/news', methods=['GET', 'POST'])
-def predict():
+def predict_news():
     if request.method == 'POST':
         data = request.get_json()
         x = char_preproc_x(data)
@@ -52,10 +54,47 @@ def predict():
         print(data)
 
         with graph.as_default():
-            prediction = model.predict(x)
+            prediction = news_model.predict(x)
             response = np.argmax(prediction, axis=1).tolist()
             print(response)
             return jsonify(response)
+
+
+def load_new_data(ticker='BTC'):
+    js = requests.get(f'https://min-api.cryptocompare.com/data/histominute?'
+                      f'fsym={ticker}'
+                      f'&tsym=USD'
+                      f'&limit=300'
+                      f'&aggregate=3'
+                      f'&e=CCCAGG')
+    d = json.loads(js.text)
+    df = pd.DataFrame(d['Data'])
+    return df
+
+
+@app.route('/price', methods=['GET', 'POST'])
+def predict_price():
+    if request.method == 'POST':
+        past_window = 256
+        data = request.get_json()
+
+        if 'ticker' not in data:
+            ticker = 'BTC'
+        else:
+            ticker = data['ticker']
+
+        df = load_new_data(ticker)
+        columns = ['close']
+        df = df.loc[:, columns]
+
+        df = price_scaler.transform(df)
+        df_np = np.array(df)
+        df_np = df_np[len(df) - past_window:]
+        df_np = np.expand_dims(df_np, axis=0)
+        predicted_b = price_scaler.inverse_transform(price_model.predict(df_np))
+
+        response = predicted_b[0].tolist()
+        return jsonify(response)
 
 
 if __name__ == "__main__":
