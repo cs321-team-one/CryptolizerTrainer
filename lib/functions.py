@@ -127,22 +127,6 @@ def load_processed_data(filepath, load=False, binarize=True):
     return data, table
 
 
-# def read_data(filepath, url_key):
-#     json_path = os.path.splitext(filepath)[0] + '.json'
-#
-#     if os.path.exists(json_path):
-#         df = pd.read_json(json_path)
-#     else:
-#         df = load_csv_xlsx(filepath)
-#
-#     if extracted_urls_result_key not in df:
-#         print("Extracting hostnames")
-#         extract_hostnames(json_path, url_key)
-#         df = pd.read_json(json_path)
-#
-#     return df
-
-
 class Dataset:
     def __init__(self, x, y=None, testsize=0.2, shuffle=False):
 
